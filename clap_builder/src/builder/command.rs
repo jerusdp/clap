@@ -7,7 +7,7 @@ use std::fmt;
 use std::io;
 use std::ops::Index;
 use std::path::Path;
-
+#[cfg(feature = "unstable-command-action")]
 use crate::builder::CommandAction;
 // Internal
 use crate::builder::app_settings::{AppFlags, AppSettings};
@@ -3968,7 +3968,6 @@ impl Command {
         self.subcommand_value_name.as_deref()
     }
 
-
     #[cfg(feature = "unstable-command-action")]
     /// Returns the command_action value
     pub fn get_action(&self) -> &CommandAction {
@@ -3981,11 +3980,10 @@ impl Command {
         let mut result = Vec::new();
         for cmd in self.get_subcommands() {
             match cmd.get_action() {
-                CommandAction::Help | CommandAction::HelpLong | CommandAction::HelpShort => 
-                {
+                CommandAction::Help | CommandAction::HelpLong | CommandAction::HelpShort => {
                     result.append(&mut cmd.get_name_and_visible_aliases());
                 }
-                _ => continue
+                _ => continue,
             }
         }
         result
@@ -4886,19 +4884,17 @@ impl Command {
                     .about(help_about)
                     .global_setting(AppSettings::DisableHelpSubcommand)
                     .subcommands(self.get_subcommands().map(Command::_copy_subtree_for_help));
-                
-                let mut help_help_subcmd = Command::new("help")
-                .about(help_about);
-            help_help_subcmd.version = None;
-            help_help_subcmd.long_version = None;
-            help_help_subcmd = help_help_subcmd
-            .setting(AppSettings::DisableHelpFlag)
-            .setting(AppSettings::DisableVersionFlag);
-        
-        help_subcmd.subcommand(help_help_subcmd)
-    } else {
-        Command::new("help")
-                .about(help_about).arg(
+
+                let mut help_help_subcmd = Command::new("help").about(help_about);
+                help_help_subcmd.version = None;
+                help_help_subcmd.long_version = None;
+                help_help_subcmd = help_help_subcmd
+                    .setting(AppSettings::DisableHelpFlag)
+                    .setting(AppSettings::DisableVersionFlag);
+
+                help_subcmd.subcommand(help_help_subcmd)
+            } else {
+                Command::new("help").about(help_about).arg(
                     Arg::new("subcommand")
                         .action(ArgAction::Append)
                         .num_args(..)
@@ -4970,27 +4966,28 @@ impl Command {
                     .command_action(CommandAction::Help)
                     .global_setting(AppSettings::DisableHelpSubcommand)
                     .subcommands(self.get_subcommands().map(Command::_copy_subtree_for_help));
-                
+
                 let mut help_help_subcmd = Command::new("help")
-                .command_action(CommandAction::Help)
-                .about(help_about);
-            help_help_subcmd.version = None;
-            help_help_subcmd.long_version = None;
-            help_help_subcmd = help_help_subcmd
-            .setting(AppSettings::DisableHelpFlag)
-            .setting(AppSettings::DisableVersionFlag);
-        
-        help_subcmd.subcommand(help_help_subcmd)
-    } else {
-        Command::new("help")
-        .command_action(CommandAction::Help)
-                .about(help_about).arg(
-                    Arg::new("subcommand")
-                        .action(ArgAction::Append)
-                        .num_args(..)
-                        .value_name("COMMAND")
-                        .help("Print help for the subcommand(s)"),
-                )
+                    .command_action(CommandAction::Help)
+                    .about(help_about);
+                help_help_subcmd.version = None;
+                help_help_subcmd.long_version = None;
+                help_help_subcmd = help_help_subcmd
+                    .setting(AppSettings::DisableHelpFlag)
+                    .setting(AppSettings::DisableVersionFlag);
+
+                help_subcmd.subcommand(help_help_subcmd)
+            } else {
+                Command::new("help")
+                    .command_action(CommandAction::Help)
+                    .about(help_about)
+                    .arg(
+                        Arg::new("subcommand")
+                            .action(ArgAction::Append)
+                            .num_args(..)
+                            .value_name("COMMAND")
+                            .help("Print help for the subcommand(s)"),
+                    )
             };
             self._propagate_subcommand(&mut help_subcmd);
 

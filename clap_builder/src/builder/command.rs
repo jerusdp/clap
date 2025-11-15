@@ -8,6 +8,7 @@ use std::io;
 use std::ops::Index;
 use std::path::Path;
 
+use crate::builder::CommandAction;
 // Internal
 use crate::builder::app_settings::{AppFlags, AppSettings};
 use crate::builder::arg_settings::ArgSettings;
@@ -75,6 +76,8 @@ pub struct Command {
     name: Str,
     long_flag: Option<Str>,
     short_flag: Option<char>,
+    #[cfg(feature = "unstable-command-action")]
+    command_action: CommandAction,
     display_name: Option<String>,
     bin_name: Option<String>,
     author: Option<Str>,
@@ -3946,6 +3949,29 @@ impl Command {
         self.subcommand_value_name.as_deref()
     }
 
+
+    #[cfg(feature = "unstable-command-action")]
+    /// Returns the command_action value
+    pub fn get_action(&self) -> &CommandAction {
+        &self.command_action
+    }
+
+    #[cfg(feature = "unstable-command-action")]
+    /// Returns the names and aliases for subcommands with a help action
+    pub fn get_help_subcommands_and_aliases(&self) -> Vec<&str> {
+        let mut result = Vec::new();
+        for cmd in self.get_subcommands() {
+            match cmd.get_action() {
+                CommandAction::Help | CommandAction::HelpLong | CommandAction::HelpShort => 
+                {
+                    result.append(&mut cmd.get_name_and_visible_aliases());
+                }
+                _ => continue
+            }
+        }
+        result
+    }
+
     /// Returns the help heading for listing subcommands.
     #[inline]
     pub fn get_before_help(&self) -> Option<&StyledStr> {
@@ -5189,6 +5215,8 @@ impl Default for Command {
             name: Default::default(),
             long_flag: Default::default(),
             short_flag: Default::default(),
+            #[cfg(feature = "unstable-command-action")]
+            command_action: Default::default(),
             display_name: Default::default(),
             bin_name: Default::default(),
             author: Default::default(),

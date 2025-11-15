@@ -500,7 +500,7 @@ impl<'cmd> Parser<'cmd> {
 
         Ok(())
     }
-    
+
     #[cfg(feature = "unstable-command-action")]
     // The actual parsing function
     #[allow(clippy::cognitive_complexity)]
@@ -548,9 +548,13 @@ impl<'cmd> Parser<'cmd> {
                     let sc_name = self.possible_subcommand(arg_os.to_value(), valid_arg_found);
                     debug!("Parser::get_matches_with: sc={sc_name:?}");
                     if let Some(sc_name) = sc_name {
-                        if self.cmd.get_help_subcommands_and_aliases().contains(&sc_name) && !self.cmd.is_disable_help_subcommand_set() {
-
-                        // if sc_name == "help" && !self.cmd.is_disable_help_subcommand_set() {
+                        if self
+                            .cmd
+                            .get_help_subcommands_and_aliases()
+                            .contains(&sc_name)
+                            && !self.cmd.is_disable_help_subcommand_set()
+                        {
+                            // if sc_name == "help" && !self.cmd.is_disable_help_subcommand_set() {
                             ok!(self.parse_help_subcommand(raw_args.remaining(&mut args_cursor)));
                             unreachable!("`parse_help_subcommand` always errors");
                         } else {

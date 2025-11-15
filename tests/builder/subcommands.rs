@@ -1,4 +1,4 @@
-use clap::{arg, error::ErrorKind, Arg, ArgAction, Command};
+use clap::{arg, error::ErrorKind, Arg, ArgAction, Command, CommandAction};
 
 use super::utils;
 use snapbox::assert_data_eq;
@@ -652,10 +652,14 @@ Options:
   -V, --version  Print version
 ";
 
+
     let cmd = Command::new("ctest")
         .version("2.6")
         // .disable_help_subcommand(true)
-        .subcommand(Command::new("aire"))
+        .subcommand(
+            Command::new("aire")
+                .about("Print this message or the help of the given subcommand(s)")
+                .command_action(CommandAction::Help))
         .subcommand(
             Command::new("test")
                 .about("Some help")
@@ -668,9 +672,9 @@ Options:
     assert!(m.is_err());
     assert_eq!(m.unwrap_err().kind(), ErrorKind::DisplayHelp);
     
-    // let m = cmd.clone().try_get_matches_from(["ctest", "aire"]);
-    // assert!(m.is_err());
-    // assert_eq!(m.unwrap_err().kind(), ErrorKind::DisplayHelp);
+    let m = cmd.clone().try_get_matches_from(["ctest", "aire"]);
+    assert!(m.is_err());
+    assert_eq!(m.unwrap_err().kind(), ErrorKind::DisplayHelp);
     
     utils::assert_output(cmd, "clap-test --help", VISIBLE_ALIAS_HELP, false);
 }

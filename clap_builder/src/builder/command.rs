@@ -1868,6 +1868,25 @@ impl Command {
         self
     }
 
+    #[cfg(feature = "unstable-command-action")]
+    /// (Re)Sets the command action.
+    ///
+    /// `command_action` is set by default to [`CommandAction::User`].
+    ///
+    /// # Examples
+    ///
+    /// ```ignore
+    /// let cmd = clap::command!()
+    ///     .command_action(CommandAction::Help);
+    ///
+    /// // continued logic goes here, such as `cmd.get_matches()` etc.
+    /// ```
+    #[must_use]
+    pub fn command_action(mut self, action: CommandAction) -> Self {
+        self.command_action = action;
+        self
+    }
+
     /// Overrides the runtime-determined name of the binary for help and error messages.
     ///
     /// This should only be used when absolutely necessary, such as when the binary name for your
@@ -4819,6 +4838,7 @@ impl Command {
         }
     }
 
+    #[cfg(not(feature = "unstable-command-action"))]
     pub(crate) fn _check_help_and_version(&mut self, expand_help_tree: bool) {
         debug!(
             "Command::_check_help_and_version:{} expand_help_tree={}",
@@ -4866,17 +4886,105 @@ impl Command {
                     .about(help_about)
                     .global_setting(AppSettings::DisableHelpSubcommand)
                     .subcommands(self.get_subcommands().map(Command::_copy_subtree_for_help));
+                
+                let mut help_help_subcmd = Command::new("help")
+                .about(help_about);
+            help_help_subcmd.version = None;
+            help_help_subcmd.long_version = None;
+            help_help_subcmd = help_help_subcmd
+            .setting(AppSettings::DisableHelpFlag)
+            .setting(AppSettings::DisableVersionFlag);
+        
+        help_subcmd.subcommand(help_help_subcmd)
+    } else {
+        Command::new("help")
+                .about(help_about).arg(
+                    Arg::new("subcommand")
+                        .action(ArgAction::Append)
+                        .num_args(..)
+                        .value_name("COMMAND")
+                        .help("Print help for the subcommand(s)"),
+                )
+            };
+            self._propagate_subcommand(&mut help_subcmd);
 
-                let mut help_help_subcmd = Command::new("help").about(help_about);
-                help_help_subcmd.version = None;
-                help_help_subcmd.long_version = None;
-                help_help_subcmd = help_help_subcmd
-                    .setting(AppSettings::DisableHelpFlag)
-                    .setting(AppSettings::DisableVersionFlag);
+            // The parser acts like this is set, so let's set it so we don't falsely
+            // advertise it to the user
+            help_subcmd.version = None;
+            help_subcmd.long_version = None;
+            help_subcmd = help_subcmd
+                .setting(AppSettings::DisableHelpFlag)
+                .setting(AppSettings::DisableVersionFlag)
+                .unset_global_setting(AppSettings::PropagateVersion);
 
-                help_subcmd.subcommand(help_help_subcmd)
+            self.subcommands.push(help_subcmd);
+        }
+    }
+
+    #[cfg(feature = "unstable-command-action")]
+    pub(crate) fn _check_help_and_version(&mut self, expand_help_tree: bool) {
+        debug!(
+            "Command::_check_help_and_version:{} expand_help_tree={}",
+            self.name, expand_help_tree
+        );
+
+        self.long_help_exists = self.long_help_exists_();
+
+        if !self.is_disable_help_flag_set() {
+            debug!("Command::_check_help_and_version: Building default --help");
+            let mut arg = Arg::new(Id::HELP)
+                .short('h')
+                .long("help")
+                .action(ArgAction::Help);
+            if self.long_help_exists {
+                arg = arg
+                    .help("Print help (see more with '--help')")
+                    .long_help("Print help (see a summary with '-h')");
             } else {
-                Command::new("help").about(help_about).arg(
+                arg = arg.help("Print help");
+            }
+            // Avoiding `arg_internal` to not be sensitive to `next_help_heading` /
+            // `next_display_order`
+            self.args.push(arg);
+        }
+        if !self.is_disable_version_flag_set() {
+            debug!("Command::_check_help_and_version: Building default --version");
+            let arg = Arg::new(Id::VERSION)
+                .short('V')
+                .long("version")
+                .action(ArgAction::Version)
+                .help("Print version");
+            // Avoiding `arg_internal` to not be sensitive to `next_help_heading` /
+            // `next_display_order`
+            self.args.push(arg);
+        }
+
+        if !self.is_set(AppSettings::DisableHelpSubcommand) {
+            debug!("Command::_check_help_and_version: Building help subcommand");
+            let help_about = "Print this message or the help of the given subcommand(s)";
+
+            let mut help_subcmd = if expand_help_tree {
+                // Slow code path to recursively clone all other subcommand subtrees under help
+                let help_subcmd = Command::new("help")
+                    .about(help_about)
+                    .command_action(CommandAction::Help)
+                    .global_setting(AppSettings::DisableHelpSubcommand)
+                    .subcommands(self.get_subcommands().map(Command::_copy_subtree_for_help));
+                
+                let mut help_help_subcmd = Command::new("help")
+                .command_action(CommandAction::Help)
+                .about(help_about);
+            help_help_subcmd.version = None;
+            help_help_subcmd.long_version = None;
+            help_help_subcmd = help_help_subcmd
+            .setting(AppSettings::DisableHelpFlag)
+            .setting(AppSettings::DisableVersionFlag);
+        
+        help_subcmd.subcommand(help_help_subcmd)
+    } else {
+        Command::new("help")
+        .command_action(CommandAction::Help)
+                .about(help_about).arg(
                     Arg::new("subcommand")
                         .action(ArgAction::Append)
                         .num_args(..)

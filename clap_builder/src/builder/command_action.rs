@@ -1,9 +1,3 @@
-
-#[cfg(debug_assertions)]
-use crate::util::AnyValueId;
-
-use crate::builder::ValueRange;
-
 /// Behavior of commands when they are encountered while parsing
 ///
 /// # Examples
@@ -15,9 +9,8 @@ use crate::builder::ValueRange;
 /// # use clap::Arg;
 /// let cmd = Command::new("mycmd")
 ///     .subcommand(
-///         Command::new("special-help")
-///             .long("aire")
-///             .action(clap::CommandAction::Help)
+///         Command::new("aire")
+///             .command_action(clap::CommandAction::Help)
 ///     );
 ///
 /// // Existing help still exists
@@ -42,14 +35,13 @@ pub enum CommandAction {
     /// # use clap::Command;
     /// # use clap::Arg;
     /// let cmd = Command::new("mycmd")
-    ///     .subcommands(
+    ///     .subcommand(
     ///         Command::new("cmd")
-    ///             .long("cmd")
-    ///             .action(clap::CommandAction::User)
+    ///             .command_action(clap::CommandAction::User)
     ///     );
     ///
-    /// let matches = cmd.try_get_matches_from(["mycmd", "cmd"]).unwrap();
-    /// assert!(matches.contains_id("cmd"));
+    /// let matches = cmd.try_get_matches_from(vec!["mycmd", "cmd"]).unwrap();
+    /// assert!(matches.subcommand().is_some());
     /// ```
     #[default]
     User,
@@ -65,9 +57,8 @@ pub enum CommandAction {
     /// # use clap::Command;
     /// let cmd = Command::new("mycmd")
     ///     .subcommand(
-    ///         Command::new("special-help")
-    ///             .long("aire")
-    ///             .action(clap::CommandAction::Help)
+    ///         Command::new("aire")
+    ///             .command_action(clap::CommandAction::Help)
     ///     );
     ///
     /// // Existing help still exists
@@ -80,57 +71,4 @@ pub enum CommandAction {
     /// # }
     /// ```
     Help,
-    /// When encountered, display [`Command::print_help`][super::Command::print_help]
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// # #[cfg(feature = "help")] {
-    /// # use clap_builder as clap;
-    /// # use clap::Command;
-    /// # use clap::Arg;
-    /// let cmd = Command::new("mycmd")
-    ///     .subcommands(
-    ///         Command::new("special-help")
-    ///             .long("aire")
-    ///             .action(clap::CommandAction::HelpShort)
-    ///     );
-    ///
-    /// // Existing help still exists
-    /// let err = cmd.clone().try_get_matches_from(["mycmd", "help"]).unwrap_err();
-    /// assert_eq!(err.kind(), clap::error::ErrorKind::DisplayHelp);
-    ///
-    /// // New help available
-    /// let err = cmd.try_get_matches_from(["mycmd", "aire"]).unwrap_err();
-    /// assert_eq!(err.kind(), clap::error::ErrorKind::DisplayHelp);
-    /// # }
-    /// ```
-    HelpShort,
-    /// When encountered, display [`Command::print_long_help`][super::Command::print_long_help]
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// # #[cfg(feature = "help")] {
-    /// # use clap_builder as clap;
-    /// # use clap::Command;
-    /// # use clap::Arg;
-    /// let cmd = Command::new("mycmd")
-    ///     .subcommands(
-    ///         Command::new("special-help")
-    ///             .long("aire")
-    ///             .action(clap::CommandAction::HelpLong)
-    ///     );
-    ///
-    /// // Existing help still exists
-    /// let err = cmd.clone().try_get_matches_from(["mycmd", "help"]).unwrap_err();
-    /// assert_eq!(err.kind(), clap::error::ErrorKind::DisplayHelp);
-    ///
-    /// // New help available
-    /// let err = cmd.try_get_matches_from(["mycmd", "aire"]).unwrap_err();
-    /// assert_eq!(err.kind(), clap::error::ErrorKind::DisplayHelp);
-    /// # }
-    /// ```
-    HelpLong,
 }
-

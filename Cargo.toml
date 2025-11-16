@@ -181,6 +181,7 @@ unstable-ext = ["clap_builder/unstable-ext"]
 unstable-styles = ["clap_builder/unstable-styles"]  # deprecated
 unstable-derive-ui-tests = []
 unstable-markdown = ["clap_derive/unstable-markdown"]
+unstable-command-action = ["clap_builder/unstable-command-action"]
 
 [lib]
 bench = false

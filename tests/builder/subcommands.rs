@@ -1,4 +1,4 @@
-use clap::{arg, error::ErrorKind, Arg, ArgAction, Command};
+use clap::{arg, error::ErrorKind, Arg, ArgAction, Command, CommandAction};
 
 use super::utils;
 use snapbox::assert_data_eq;
@@ -634,4 +634,47 @@ fn duplicate_subcommand_alias() {
         .subcommand(Command::new("repeat"))
         .subcommand(Command::new("unique").alias("repeat"))
         .build();
+}
+
+#[cfg(feature = "unstable-command-action")]
+#[test]
+fn custom_help_command() {
+    static VISIBLE_ALIAS_HELP: &str = "\
+Usage: clap-test [COMMAND]
+
+Commands:
+  aire  Print this message or the help of the given subcommand(s)
+  test  Some help
+  help  Print this message or the help of the given subcommand(s)
+
+Options:
+  -h, --help     Print help
+  -V, --version  Print version
+";
+
+
+    let cmd = Command::new("ctest")
+        .version("2.6")
+        // .disable_help_subcommand(true)
+        .subcommand(
+            Command::new("aire")
+                .about("Print this message or the help of the given subcommand(s)")
+                .command_action(CommandAction::Help))
+        .subcommand(
+            Command::new("test")
+                .about("Some help")
+        );
+
+        
+        
+        
+    let m = cmd.clone().try_get_matches_from(["ctest", "help"]);
+    assert!(m.is_err());
+    assert_eq!(m.unwrap_err().kind(), ErrorKind::DisplayHelp);
+    
+    let m = cmd.clone().try_get_matches_from(["ctest", "aire"]);
+    assert!(m.is_err());
+    assert_eq!(m.unwrap_err().kind(), ErrorKind::DisplayHelp);
+    
+    utils::assert_output(cmd, "clap-test --help", VISIBLE_ALIAS_HELP, false);
 }

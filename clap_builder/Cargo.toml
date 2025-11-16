@@ -53,6 +53,7 @@ string = []  # Allow runtime generated strings
 unstable-v5 = ["deprecated"]
 unstable-ext = []
 unstable-styles = ["color"]  # deprecated
+unstable-command-action =[]
 
 [lib]
 bench = false

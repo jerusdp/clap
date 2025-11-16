@@ -16,6 +16,8 @@ compile_error!("`std` feature is currently required to build `clap`");
 
 pub use crate::builder::ArgAction;
 pub use crate::builder::Command;
+#[cfg(feature = "unstable-command-action")]
+pub use crate::builder::CommandAction;
 pub use crate::builder::ValueHint;
 pub use crate::builder::{Arg, ArgGroup};
 pub use crate::parser::ArgMatches;

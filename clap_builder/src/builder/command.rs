@@ -3980,7 +3980,7 @@ impl Command {
         let mut result = Vec::new();
         for cmd in self.get_subcommands() {
             match cmd.get_action() {
-                CommandAction::Help | CommandAction::HelpLong | CommandAction::HelpShort => {
+                CommandAction::Help => {
                     result.append(&mut cmd.get_name_and_visible_aliases());
                 }
                 _ => continue,
